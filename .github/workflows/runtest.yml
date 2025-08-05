@@ -38,15 +38,15 @@ jobs:
         run: |
           source .venv/bin/activate
           echo "# MLOps Sanity Test Report" > result.txt
-          echo "## Code Formatting (Black)" >> result.txt
-          black --check --diff train.py test/ >> result.txt 2>&1 || echo "Formatting issues found" >> result.txt
+          echo "## Code Formatting Done (Black)" >> result.txt
+          black --check --diff train.py test/ 2>&1 || echo "Formatting issues found" 
           echo "" >> result.txt
 
       - name: Run Flake8 linter
         run: |
           source .venv/bin/activate
-          echo "## Linting Results (Flake8)" >> result.txt
-          flake8 train.py test/ --max-line-length=88 --extend-ignore=E203,W503 >> result.txt 2>&1 || echo "Linting issues found" >> result.txt
+          echo "## Linting Done (Flake8)" >> result.txt
+          flake8 train.py test/ --max-line-length=88 --extend-ignore=E203,W503 2>&1 || echo "Linting issues found" 
           echo "" >> result.txt
 
       - name: Run training (label poisoning = ${{ matrix.poison_percent }}%)
@@ -72,6 +72,26 @@ jobs:
           path: |
             model/model_poison_${{ matrix.poison_percent }}.pkl
             result.txt
+  summary-report:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Combine results into markdown
+        run: |
+          echo "# Label Poisoning Report" > report.md
+          for p in 0 5 10 50; do
+            echo "## Poisoning ${p}%" >> report.md
+            cat artifacts/model-artifacts-${p}/result.txt >> report.md
+            echo -e "\n---\n" >> report.md
+          done
 
       - name: Setup CML
         uses: iterative/setup-cml@v2
