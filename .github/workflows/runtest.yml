@@ -3,7 +3,7 @@ name: MLOPS Sanity Run Test
 on:
   workflow_dispatch:
   pull_request:
-    branches: [main]
+    branches: [week8_pract]
 
 permissions:
   contents: read
@@ -12,6 +12,9 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        poison_percent: [0, 5, 10, 50]
 
     steps:
       - name: Checkout code
@@ -29,6 +32,7 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install black flake8
+          pip install mlflow
 
       - name: Run Black formatter
         run: |
@@ -45,10 +49,10 @@ jobs:
           flake8 train.py test/ --max-line-length=88 --extend-ignore=E203,W503 >> result.txt 2>&1 || echo "Linting issues found" >> result.txt
           echo "" >> result.txt
 
-      - name: Run training
+      - name: Run training (label poisoning = ${{ matrix.poison_percent }}%)
         run: |
           source .venv/bin/activate
-          python train.py > training.log
+          python train.py ${{ matrix.poison_percent }} > training.log
           echo "## Training Log" >> result.txt
           cat training.log >> result.txt
           echo "" >> result.txt
@@ -66,7 +70,7 @@ jobs:
         with:
           name: model-artifacts
           path: |
-            model/model.pkl
+            model/model_poison_${{ matrix.poison_percent }}.pkl
             result.txt
 
       - name: Setup CML
