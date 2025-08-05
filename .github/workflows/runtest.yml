@@ -68,7 +68,7 @@ jobs:
       - name: Upload result and model artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: model-artifacts
+          name: model-artifacts-${{ matrix.poison_percent }}
           path: |
             model/model_poison_${{ matrix.poison_percent }}.pkl
             result.txt
