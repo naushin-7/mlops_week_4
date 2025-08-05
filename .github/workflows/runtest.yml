@@ -100,5 +100,4 @@ jobs:
         env:
           REPO_TOKEN: ${{ secrets.CML_TOKEN }}
         run: |
-          source .venv/bin/activate
-          cml comment update --publish result.txt
+          cml comment update --publish  report.md
